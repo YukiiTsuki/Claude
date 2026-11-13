@@ -1,0 +1,39 @@
+name: Man City 賽後通知
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"  # 每 30 分鐘檢查一次（約 50 次請求/天，在免費額度 100 次內）
+  workflow_dispatch: {}      # 也可以在 GitHub 上手動執行
+
+permissions:
+  contents: write  # 需要把「已通知過的比賽」紀錄寫回 repo
+
+concurrency:
+  group: football-notify
+  cancel-in-progress: false
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 檢查比賽並推送
+        env:
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+        run: python football_notify/notify.py
+
+      - name: 儲存已通知紀錄
+        run: |
+          if [ -n "$(git status --porcelain football_notify/state)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add football_notify/state
+            git commit -m "Update notified fixtures"
+            git push
+          fi
