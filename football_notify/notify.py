@@ -181,11 +181,9 @@ def push(title: str, message: str) -> None:
 
 
 def candidate_dates(now: datetime) -> list[str]:
-    dates = [now.date()]
-    # 凌晨時也檢查前一天，避免跨日的比賽漏掉
-    if now.hour < 4:
-        dates.append((now - timedelta(days=1)).date())
-    return [d.isoformat() for d in dates]
+    # 同時檢查前一天（UTC）：比賽若在檢查時段結束後才完場（例如歐冠延長賽、PK），
+    # 或當時評分還沒公布，隔天第一輪檢查會補推
+    return [now.date().isoformat(), (now - timedelta(days=1)).date().isoformat()]
 
 
 def main() -> int:
