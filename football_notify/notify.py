@@ -150,7 +150,11 @@ def build_message(league: str, event: dict, summary: dict) -> tuple[str, str]:
     _, status = status_info(comp)
     home = next(c for c in comp["competitors"] if c.get("homeAway") == "home")
     away = next(c for c in comp["competitors"] if c.get("homeAway") == "away")
-    teams = {str(c["team"]["id"]): c["team"].get("displayName") or c["team"].get("name") for c in (home, away)}
+    # 隊名用三碼縮寫（例如 MNC、NFO），沒有縮寫時退回完整隊名
+    teams = {
+        str(c["team"]["id"]): c["team"].get("abbreviation") or c["team"].get("displayName") or c["team"].get("name")
+        for c in (home, away)
+    }
 
     score = f"{teams[str(home['team']['id'])]} {home.get('score')} - {away.get('score')} {teams[str(away['team']['id'])]}"
     if "PEN" in status:

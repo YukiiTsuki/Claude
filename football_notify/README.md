@@ -9,9 +9,9 @@
 - Rúben Dias 的進球、助攻、黃紅牌、出場時間（並標示先發或替補）
 
 ```
-歐冠｜Manchester City 2 - 1 Real Madrid
-🥅 Manchester City：Erling Haaland 12'、Erling Haaland 45'+2'（PK）
-🥅 Real Madrid：Vinícius Júnior 80'
+歐冠｜MNC 2 - 1 RMA
+🥅 MNC：Erling Haaland 12'、Erling Haaland 45'+2'（PK）
+🥅 RMA：Vinícius Júnior 80'
 👤 Rúben Dias｜⚽ 進球 0｜🅰️ 助攻 1｜牌 🟨｜⏱️ 90'（先發）
 ```
 
