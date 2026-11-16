@@ -5,7 +5,12 @@ on:
     # 台灣時間 20:30～06:30，每 30 分鐘檢查一次（cron 用 UTC：12:30～22:30）
     - cron: "30 12-22 * * *"
     - cron: "0 13-22 * * *"
-  workflow_dispatch: {}      # 也可以在 GitHub 上手動執行
+  workflow_dispatch:         # 也可以在 GitHub 上手動執行
+    inputs:
+      test_latest:
+        description: "測試模式：用最近一場已完賽的比賽產生通知，只印在 Log、不推送"
+        type: boolean
+        default: false
 
 permissions:
   contents: write  # 需要把「已通知過的比賽」紀錄寫回 repo
@@ -26,8 +31,8 @@ jobs:
 
       - name: 檢查比賽並推送
         env:
-          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          TEST_LATEST: ${{ inputs.test_latest && '1' || '' }}
         run: python football_notify/notify.py
 
       - name: 儲存已通知紀錄
