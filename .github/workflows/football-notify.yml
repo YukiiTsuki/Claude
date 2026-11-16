@@ -11,6 +11,15 @@ on:
         description: "測試模式：用最近一場已完賽的比賽產生通知，只印在 Log、不推送"
         type: boolean
         default: false
+      test_push:
+        description: "測試模式下也推送到手機"
+        type: boolean
+        default: false
+      test_league:
+        description: "測試模式只跑哪個賽事"
+        type: choice
+        options: [all, eng.1, uefa.champions]
+        default: all
 
 permissions:
   contents: write  # 需要把「已通知過的比賽」紀錄寫回 repo
@@ -33,6 +42,8 @@ jobs:
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
           TEST_LATEST: ${{ inputs.test_latest && '1' || '' }}
+          TEST_PUSH: ${{ inputs.test_push && '1' || '' }}
+          TEST_LEAGUE: ${{ inputs.test_league != 'all' && inputs.test_league || '' }}
         run: python football_notify/notify.py
 
       - name: 儲存已通知紀錄

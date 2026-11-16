@@ -10,6 +10,8 @@
   NTFY_SERVER       預設 https://ntfy.sh
   DRY_RUN=1         只印出通知內容，不推送也不寫入狀態
   TEST_LATEST=1     測試模式：拿曼城最近一場已完賽的比賽產生通知並印出（不推送）
+  TEST_PUSH=1       測試模式下也推送到手機（標題加上【測試】）
+  TEST_LEAGUE       測試模式只跑指定賽事，例如 eng.1
 """
 
 from __future__ import annotations
@@ -194,7 +196,10 @@ def summary_of(league: str, event_id: str) -> dict:
 
 def test_latest() -> int:
     """測試模式：每個賽事各找曼城最近一場完賽的比賽，印出通知內容。"""
+    only = os.environ.get("TEST_LEAGUE") or ""
     for league in LEAGUES:
+        if only and only != league:
+            continue
         sched = get_json(f"{API_BASE}/{league}/teams/{TEAM_ID}/schedule")
         done = sorted(
             (e for e in sched.get("events") or [] if status_info(e["competitions"][0])[0]),
@@ -217,6 +222,9 @@ def test_latest() -> int:
             print("  球員原始資料：", json.dumps(debug, ensure_ascii=False))
         title, message = build_message(league, full_ev, summary)
         print(f"--- {title}\n{message}\n")
+        if os.environ.get("TEST_PUSH") == "1":
+            push("【測試】" + title, message)
+            print("  已推送到手機")
     return 0
 
 
