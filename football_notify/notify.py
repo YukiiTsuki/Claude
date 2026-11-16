@@ -194,7 +194,10 @@ def main() -> int:
     changed = False
 
     for date in candidate_dates(now):
-        for fx in api_get("fixtures", {"team": TEAM_ID, "date": date}):
+        # 歐洲球季跨年：7 月以後算當年球季，之前算前一年（例如 2026-11 → 2026，2027-03 → 2026）
+        y, m = int(date[:4]), int(date[5:7])
+        season = y if m >= 7 else y - 1
+        for fx in api_get("fixtures", {"team": TEAM_ID, "date": date, "season": season}):
             fid = fx["fixture"]["id"]
             if fx["league"]["id"] not in LEAGUES or fid in notified:
                 continue
