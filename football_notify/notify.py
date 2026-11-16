@@ -196,9 +196,12 @@ def test_latest() -> int:
     """測試模式：每個賽事各找曼城最近一場完賽的比賽，印出通知內容。"""
     for league in LEAGUES:
         sched = get_json(f"{API_BASE}/{league}/teams/{TEAM_ID}/schedule")
-        done = [e for e in sched.get("events") or [] if status_info(e["competitions"][0])[0]]
+        done = sorted(
+            (e for e in sched.get("events") or [] if status_info(e["competitions"][0])[0]),
+            key=lambda e: e["date"],
+        )
+        print(f"[{league}] 已完賽：" + "、".join(f"{e['date'][:10]} {e.get('shortName', '')}" for e in done))
         if not done:
-            print(f"[{league}] 找不到已完賽的比賽")
             continue
         ev = done[-1]
         # schedule 的資料比較精簡，改從 scoreboard 拿完整的進球明細
