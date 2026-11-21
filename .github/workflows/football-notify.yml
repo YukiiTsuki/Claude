@@ -35,6 +35,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          # 拿分支的最新版本（含上一輪寫回的已通知紀錄），避免排隊的執行讀到舊紀錄而重複推送
+          ref: ${{ github.ref_name }}
 
       - uses: actions/setup-python@v6
         with:
