@@ -21,7 +21,17 @@
 2. **設定 GitHub Secret**：在 repo 的 **Settings → Secrets and variables → Actions → New repository secret** 新增 `NTFY_TOPIC`：你在第 1 步取的主題名稱
 3. **測試**：到 **Actions → Man City 賽後通知 → Run workflow**，勾選「測試模式」再執行。程式會用最近一場已完賽的比賽產生通知內容，印在 Log 裡，不會推送。
 
-> ⚠️ GitHub 的排程只會在 repo 的**預設分支**上執行。如果這個分支不是預設分支，要先 merge 進預設分支（或在 Settings 把它設成預設分支），排程才會自動跑。
+## 定時觸發（cron-job.org）
+
+GitHub 內建的排程延遲和跳過太嚴重（實測一個時段 21 次只跑 2 次，且常延遲數小時），所以改由 [cron-job.org](https://cron-job.org) 定時呼叫 GitHub API 觸發 workflow。
+
+- URL：`POST https://api.github.com/repos/YukiiTsuki/Claude/actions/workflows/football-notify.yml/dispatches`
+- Headers：`Authorization: Bearer <fine-grained token>`、`Accept: application/vnd.github+json`、`X-GitHub-Api-Version: 2022-11-28`、`Content-Type: application/json`
+- Body：`{"ref":"claude/android-push-notifications-01qkbf"}`
+- 時區 Asia/Taipei，兩個排程：
+  - 晚上：`*/30 20-23 * * 0,2-3,5-6`
+  - 清晨：`*/30 0-6 * * 0-1,3-4,6`
+- Token：fine-grained，只授權這個 repo、Actions: Read and write。**到期後要重新申請，並更新 cron-job.org 兩個排程的 Authorization。**
 
 ## 運作方式
 
