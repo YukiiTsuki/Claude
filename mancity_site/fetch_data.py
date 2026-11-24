@@ -123,11 +123,42 @@ def simplify_match(ev: dict, league: str) -> dict:
     }
 
 
+def match_goals(league: str, event_id: str) -> list[dict]:
+    """Goals of a finished match: minute, side (for/against City), scorer, assist, kind."""
+    summary = get_json(f"{SITE_API}/{league}/summary?event={event_id}")
+    goals = []
+    for k in summary.get("keyEvents") or []:
+        if not k.get("scoringPlay"):
+            continue
+        if (k.get("period") or {}).get("number", 0) >= 5:  # penalty shoot-out kicks
+            continue
+        kind_text = ((k.get("type") or {}).get("text") or "").lower()
+        text = k.get("text") or ""
+        people = [p["athlete"].get("displayName", "") for p in k.get("participants") or [] if p.get("athlete")]
+        kind = "og" if "own goal" in kind_text else "pen" if "penalty" in kind_text else None
+        assist = people[1] if len(people) > 1 and kind is None and "Assisted by" in text else None
+        goals.append({
+            "minute": (k.get("clock") or {}).get("displayValue", ""),
+            # keyEvents credit the goal to the team that benefits (own goals included)
+            "side": "for" if str((k.get("team") or {}).get("id")) == TEAM_ID else "against",
+            "scorer": people[0] if people else "",
+            "assist": assist,
+            "kind": kind,
+        })
+    return goals
+
+
 def build_matches() -> list[dict]:
     matches = []
     for league in COMPETITIONS:
         for ev in team_schedule(league, TEAM_ID):
-            matches.append(simplify_match(ev, league))
+            m = simplify_match(ev, league)
+            if m["state"] == "post":
+                try:
+                    m["goals"] = match_goals(league, m["id"])
+                except Exception as exc:  # goals are a nice-to-have; keep the match
+                    print(f"note: no goal details for {m['id']}: {exc}", file=sys.stderr)
+            matches.append(m)
     return sorted(matches, key=lambda m: m["date"])
 
 

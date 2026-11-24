@@ -74,6 +74,22 @@ function relativeKickoff(date, now) {
   return "";
 }
 
+/* ---------- Goals (scorer, minute, assist) ---------- */
+function goalItem(g) {
+  const tag = g.kind === "pen" ? " (pen)" : g.kind === "og" ? " (OG)" : "";
+  return `<li><span class="g-min">${esc(g.minute)}</span>
+    <span class="g-who"><span class="g-scorer">${esc(g.scorer)}${tag}</span>${
+      g.assist ? `<span class="g-assist">Assist: ${esc(g.assist)}</span>` : ""}</span></li>`;
+}
+function goalsBlock(m) {
+  if (m.state !== "post" || !m.goals?.length) return "";
+  const city = m.goals.filter((g) => g.side === "for");
+  const opp = m.goals.filter((g) => g.side === "against");
+  const [home, away] = m.home ? [city, opp] : [opp, city];
+  const list = (gs, cls) => `<ul class="goals ${cls}">${gs.map(goalItem).join("")}</ul>`;
+  return `<div class="goal-cols" aria-label="Goals">${list(home, "home")}${list(away, "away")}</div>`;
+}
+
 /* ---------- Match card ---------- */
 function matchCard(m, data, now, { highlight = false } = {}) {
   const date = new Date(m.date);
@@ -110,6 +126,7 @@ function matchCard(m, data, now, { highlight = false } = {}) {
       <div class="mid">${mid}</div>
       <div class="side"><img src="${esc(away.logo)}" alt="" loading="lazy"><span>${esc(away.name)}</span></div>
     </div>
+    ${goalsBlock(m)}
     <div class="card-bottom">
       <span>${esc([m.round, m.venue].filter(Boolean).join(" · "))}</span>
       ${right}
@@ -240,13 +257,16 @@ function renderCharts(data, compareId) {
     borderWidth: 2,
     pointRadius: 4,
     pointHoverRadius: 6,
-    tension: 0.25,
+    tension: 0.3,
+    cubicInterpolationMode: "monotone",
+    clip: false,
   }));
 
   const base = (extraY) => ({
     responsive: true,
     maintainAspectRatio: false,
     interaction: { mode: "index", intersect: false },
+    layout: { padding: { top: 8, right: 8 } },
     plugins: {
       legend: { display: ids.length > 1, labels: { color: text2, boxWidth: 12, boxHeight: 12, usePointStyle: true } },
       tooltip: { padding: 10 },

@@ -166,6 +166,19 @@ img { display: block; }
   color: var(--text-2);
 }
 
+/* Goals on result cards */
+.goal-cols {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  border-top: 1px solid var(--border); padding-top: 10px;
+}
+.goals { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: 12px; min-width: 0; }
+.goals li { display: flex; gap: 6px; align-items: baseline; }
+.goals.away li { flex-direction: row-reverse; text-align: right; }
+.g-min { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; flex: none; }
+.g-who { display: flex; flex-direction: column; min-width: 0; }
+.g-scorer { font-weight: 600; color: var(--text); overflow-wrap: anywhere; }
+.g-assist { color: var(--muted); font-size: 11px; overflow-wrap: anywhere; }
+
 /* Result badge */
 .res {
   display: inline-grid; place-items: center;
