@@ -237,6 +237,12 @@ select {
 .zone-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
 
 /* Fixtures */
+.fixtures .day td { color: var(--muted); font-size: 12px; font-weight: 600; padding: 10px 10px 4px; border-bottom: 0; }
+.fixtures tr.city td { background: var(--accent-soft); font-weight: 700; }
+.fixtures .opp.right { justify-content: flex-end; text-align: right; }
+.ucl-fixtures .fx-home, .ucl-fixtures .fx-away { width: 40%; }
+.ucl-fixtures .fx-time { text-align: center; white-space: nowrap; width: 1%; padding: 9px 14px; }
+.ucl-fixtures .venue { width: 20%; }
 .filters { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
 .filters button {
   font: inherit; font-size: 13px;

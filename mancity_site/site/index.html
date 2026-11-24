@@ -24,6 +24,7 @@
     <div class="wrap tabs-inner" role="tablist">
       <button type="button" role="tab" id="tab-overview" aria-controls="panel-overview" aria-selected="true">Overview</button>
       <button type="button" role="tab" id="tab-league" aria-controls="panel-league" aria-selected="false" tabindex="-1">Premier League</button>
+      <button type="button" role="tab" id="tab-ucl" aria-controls="panel-ucl" aria-selected="false" tabindex="-1">Champions League</button>
       <button type="button" role="tab" id="tab-fixtures" aria-controls="panel-fixtures" aria-selected="false" tabindex="-1">Fixtures</button>
     </div>
   </nav>
@@ -90,6 +91,31 @@
       </div>
     </section>
 
+    </div>
+
+    <div class="tab-panel" id="panel-ucl" role="tabpanel" aria-labelledby="tab-ucl" hidden>
+    <section class="block">
+      <div class="block-head">
+        <h2>League Phase Table</h2>
+        <span class="muted" id="ucl-summary"></span>
+      </div>
+      <div class="panel table-scroll">
+        <table class="league-table" id="ucl-table"></table>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="block-head">
+        <h2>Upcoming Fixtures</h2>
+        <div class="filters" id="ucl-filters" role="group" aria-label="Filter fixtures">
+          <button type="button" data-only="" aria-pressed="true">All matches</button>
+          <button type="button" data-only="city" aria-pressed="false">Man City</button>
+        </div>
+      </div>
+      <div class="panel table-scroll">
+        <table class="fixtures ucl-fixtures" id="ucl-fixtures"></table>
+      </div>
+    </section>
     </div>
 
     <div class="tab-panel" id="panel-fixtures" role="tabpanel" aria-labelledby="tab-fixtures" hidden>

@@ -28,6 +28,7 @@ COMPETITIONS = {  # ESPN league code -> display name
 }
 SITE_API = "https://site.api.espn.com/apis/site/v2/sports/soccer"
 STANDINGS_API = "https://site.api.espn.com/apis/v2/sports/soccer/eng.1/standings"
+UCL_STANDINGS_API = "https://site.api.espn.com/apis/v2/sports/soccer/uefa.champions/standings"
 OUT_FILE = Path(__file__).parent / "site" / "data.json"
 
 
@@ -256,13 +257,96 @@ def build_league() -> dict:
     }
 
 
+def team_info(t: dict) -> dict:
+    return {
+        "id": t["id"],
+        "name": t.get("displayName", ""),
+        "short": t.get("shortDisplayName", ""),
+        "abbr": t.get("abbreviation", ""),
+        "logo": logo_of(t),
+    }
+
+
+def season_months(today: datetime) -> list[str]:
+    """YYYYMM from the season start (August) through June of the following year."""
+    start_year = today.year if today.month >= 7 else today.year - 1
+    months = [f"{start_year}{m:02d}" for m in range(8, 13)]
+    months += [f"{start_year + 1}{m:02d}" for m in range(1, 7)]
+    return months
+
+
+def build_ucl(today: datetime) -> dict:
+    """Champions League: ESPN's official league-phase table plus every upcoming fixture."""
+    standings = get_json(UCL_STANDINGS_API)
+    group = standings["children"][0]
+    table = []
+    for e in group["standings"]["entries"]:
+        st = {s["name"]: s.get("value") for s in e.get("stats", [])}
+        num = lambda k: int(st.get(k) or 0)
+        note = e.get("note")
+        table.append({
+            **team_info(e["team"]),
+            "pos": num("rank"), "p": num("gamesPlayed"), "w": num("wins"), "d": num("ties"),
+            "l": num("losses"), "gf": num("pointsFor"), "ga": num("pointsAgainst"),
+            "gd": num("pointDifferential"), "pts": num("points"),
+            "zone": {"label": note.get("description", ""), "color": note.get("color", "")} if note else None,
+        })
+    table.sort(key=lambda r: r["pos"])
+
+    events: dict[str, dict] = {}
+    for month in season_months(today):
+        data = get_json(f"{SITE_API}/uefa.champions/scoreboard?dates={month}&limit=300")
+        for ev in data.get("events", []):
+            events[ev["id"]] = ev
+    events_sorted = sorted(events.values(), key=lambda e: e["date"])
+
+    # League-phase matchday = cluster of match dates (a new matchday starts after a >3-day gap).
+    matchday, last_day = 0, None
+    md_of_date: dict[str, int] = {}
+    for ev in events_sorted:
+        if (ev.get("season") or {}).get("slug") != "league-phase":
+            continue
+        day = datetime.strptime(ev["date"][:10], "%Y-%m-%d")
+        if last_day is None or (day - last_day).days > 3:
+            matchday += 1
+        md_of_date[ev["date"][:10]] = matchday
+        last_day = day
+
+    fixtures = []
+    for ev in events_sorted:
+        comp = ev["competitions"][0]
+        state = comp["status"]["type"].get("state")
+        if state == "post":
+            continue
+        slug = (ev.get("season") or {}).get("slug") or ""
+        round_name = (f"Matchday {md_of_date[ev['date'][:10]]}" if slug == "league-phase"
+                      else slug.replace("-", " ").title())
+        sides = {c["homeAway"]: c for c in comp["competitors"]}
+        hs, _ = score_of(sides["home"])
+        as_, _ = score_of(sides["away"])
+        fixtures.append({
+            "id": ev["id"],
+            "date": ev["date"],
+            "round": round_name,
+            "state": state,
+            "statusDetail": comp["status"]["type"].get("shortDetail", ""),
+            "home": team_info(sides["home"]["team"]),
+            "away": team_info(sides["away"]["team"]),
+            "score": [hs, as_] if state == "in" else None,
+            "venue": (comp.get("venue") or {}).get("fullName", ""),
+        })
+    return {"name": group.get("name", "League Phase"), "table": table, "fixtures": fixtures}
+
+
 def main() -> None:
+    now = datetime.now(timezone.utc)
     data = {
-        "generatedAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "generatedAt": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "team": {"id": TEAM_ID, "name": "Manchester City",
                  "logo": f"https://a.espncdn.com/i/teamlogos/soccer/500/{TEAM_ID}.png"},
         "matches": build_matches(),
         "league": build_league(),
+        "ucl": build_ucl(now),
     }
     OUT_FILE.parent.mkdir(parents=True, exist_ok=True)
     OUT_FILE.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")

@@ -207,30 +207,74 @@ function renderGlance(data) {
   $("#comp-record").innerHTML = `<thead><tr><th>Competition</th><th>P</th><th>W</th><th>D</th><th>L</th><th>Goals</th><th>To play</th></tr></thead><tbody>${rows}</tbody>`;
 }
 
-/* ---------- League table ---------- */
-function renderTable(data) {
-  const L = data.league;
-  const body = L.table.map((r) => {
-    const t = L.teams[r.id];
+/* ---------- Standings tables (PL + UCL) ---------- */
+function renderStandings(sel, rows, teamOf, cityId, { form = false } = {}) {
+  const body = rows.map((r) => {
+    const t = teamOf(r);
     const zone = r.zone?.color ? `style="--zone:${esc(r.zone.color)}"` : "";
-    const form = r.form.map((f) => `<span class="res ${f}">${f}</span>`).join("");
-    return `<tr class="${r.id === data.team.id ? "city" : ""}">
+    const formCell = form ? `<td><span class="mini-form">${r.form.map((f) => `<span class="res ${f}">${f}</span>`).join("")}</span></td>` : "";
+    return `<tr class="${r.id === cityId ? "city" : ""}">
       <td class="pos" ${zone} title="${esc(r.zone?.label || "")}">${r.pos}</td>
       <td class="team"><div class="team-cell"><img src="${esc(t.logo)}" alt="" loading="lazy">${esc(t.short || t.name)}</div></td>
       <td>${r.p}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td>
       <td>${r.gf}</td><td>${r.ga}</td><td>${r.gd > 0 ? "+" : ""}${r.gd}</td>
-      <td class="pts">${r.pts}</td>
-      <td><span class="mini-form">${form}</span></td>
+      <td class="pts">${r.pts}</td>${formCell}
     </tr>`;
   }).join("");
 
   const zones = new Map();
-  L.table.forEach((r) => { if (r.zone?.label && !zones.has(r.zone.label)) zones.set(r.zone.label, r.zone.color); });
+  rows.forEach((r) => { if (r.zone?.label && !zones.has(r.zone.label)) zones.set(r.zone.label, r.zone.color); });
   const legend = [...zones].map(([label, color]) => `<span><i style="background:${esc(color)}"></i>${esc(label)}</span>`).join("");
 
-  $("#league-table").innerHTML = `<thead><tr><th>#</th><th class="team">Club</th><th>P</th><th>W</th><th>D</th><th>L</th>
-    <th>GF</th><th>GA</th><th>GD</th><th>Pts</th><th>Form</th></tr></thead><tbody>${body}</tbody>`;
-  if (legend) $("#league-table").insertAdjacentHTML("afterend", `<div class="zone-legend">${legend}</div>`);
+  const table = $(sel);
+  table.innerHTML = `<thead><tr><th>#</th><th class="team">Club</th><th>P</th><th>W</th><th>D</th><th>L</th>
+    <th>GF</th><th>GA</th><th>GD</th><th>Pts</th>${form ? "<th>Form</th>" : ""}</tr></thead><tbody>${body}</tbody>`;
+  if (legend) table.insertAdjacentHTML("afterend", `<div class="zone-legend">${legend}</div>`);
+}
+
+function renderTable(data) {
+  renderStandings("#league-table", data.league.table, (r) => data.league.teams[r.id], data.team.id, { form: true });
+}
+
+/* ---------- Champions League ---------- */
+function renderUcl(data) {
+  const U = data.ucl;
+  if (!U) return;
+  renderStandings("#ucl-table", U.table, (r) => r, data.team.id);
+  const city = U.table.find((r) => r.id === data.team.id);
+  if (city) $("#ucl-summary").textContent = `Man City: ${ordinal(city.pos)} · ${city.pts} pts from ${city.p} games`;
+
+  const draw = (onlyCity) => {
+    const list = U.fixtures.filter((f) => !onlyCity || f.home.id === data.team.id || f.away.id === data.team.id);
+    let round = "", day = "";
+    const rows = list.map((f) => {
+      const d = new Date(f.date);
+      const isCity = f.home.id === data.team.id || f.away.id === data.team.id;
+      let head = "";
+      if (f.round !== round) { round = f.round; day = ""; head += `<tr class="month"><td colspan="5">${esc(round)}</td></tr>`; }
+      const dayLabel = fmtDay.format(d);
+      if (dayLabel !== day) { day = dayLabel; head += `<tr class="day"><td colspan="5">${esc(dayLabel)}</td></tr>`; }
+      const mid = f.state === "in" && f.score
+        ? `<b>${f.score[0]} – ${f.score[1]}</b> <span class="countdown">Live</span>`
+        : fmtTime.format(d);
+      return `${head}<tr class="${isCity ? "city" : ""}">
+        <td class="fx-home"><div class="opp right">${esc(f.home.short || f.home.name)}<img src="${esc(f.home.logo)}" alt="" loading="lazy"></div></td>
+        <td class="fx-time">${mid}</td>
+        <td class="fx-away"><div class="opp"><img src="${esc(f.away.logo)}" alt="" loading="lazy">${esc(f.away.short || f.away.name)}</div></td>
+        <td class="rd venue">${esc(f.venue)}</td>
+      </tr>`;
+    }).join("");
+    $("#ucl-fixtures").innerHTML = `<tbody>${rows || `<tr><td>No upcoming Champions League matches.</td></tr>`}</tbody>`;
+  };
+
+  const box = $("#ucl-filters");
+  box.addEventListener("click", (e) => {
+    const btn = e.target.closest("button");
+    if (!btn) return;
+    box.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
+    draw(btn.dataset.only === "city");
+  });
+  draw(false);
 }
 
 /* ---------- Charts ---------- */
@@ -405,6 +449,7 @@ async function main() {
   renderGlance(data);
   let chartsReady = false;
   renderTable(data);
+  renderUcl(data);
   setupFilters(data);
   setupTabs((name) => {
     if (name === "league" && !chartsReady) { chartsReady = true; setupCompare(data); }
