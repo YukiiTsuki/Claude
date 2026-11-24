@@ -1,0 +1,49 @@
+name: Man City site (update data + deploy)
+
+on:
+  schedule:
+    # 每 6 小時更新一次資料（UTC 01:17、07:17、13:17、19:17）
+    - cron: "17 1,7,13,19 * * *"
+  workflow_dispatch:
+  push:
+    paths:
+      - "mancity_site/**"
+      - ".github/workflows/mancity-site.yml"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: mancity-site
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Fetch data from ESPN
+        run: python mancity_site/fetch_data.py
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: mancity_site/site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

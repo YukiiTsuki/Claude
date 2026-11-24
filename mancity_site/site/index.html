@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Man City Season Tracker</title>
+  <meta name="description" content="Manchester City 2026-27: fixtures, results and Premier League position across every first-team competition.">
+  <link rel="icon" href="https://a.espncdn.com/i/teamlogos/soccer/500/382.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <img class="crest" src="https://a.espncdn.com/i/teamlogos/soccer/500/382.png" alt="" width="48" height="48">
+      <div>
+        <h1>Manchester City</h1>
+        <p class="sub" id="season-label">Season tracker</p>
+      </div>
+      <div class="header-stats" id="header-stats"></div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="block" id="this-week">
+      <div class="block-head">
+        <h2>This Week</h2>
+        <span class="muted" id="this-week-range"></span>
+      </div>
+      <div class="cards" id="this-week-cards"></div>
+    </section>
+
+    <section class="block" id="last-week">
+      <div class="block-head">
+        <h2>Last Week's Results</h2>
+        <span class="muted" id="last-week-range"></span>
+      </div>
+      <div class="cards" id="last-week-cards"></div>
+    </section>
+
+    <section class="block">
+      <div class="block-head"><h2>Season at a Glance</h2></div>
+      <div class="glance">
+        <div class="panel">
+          <h3>Form · last 5 (all competitions)</h3>
+          <div class="form-strip" id="form-strip"></div>
+        </div>
+        <div class="panel wide">
+          <h3>Record by competition</h3>
+          <table class="mini-table" id="comp-record"></table>
+        </div>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="block-head">
+        <h2>Premier League Journey</h2>
+        <label class="compare">Compare with
+          <select id="compare-select"><option value="">—</option></select>
+        </label>
+      </div>
+      <div class="charts">
+        <figure class="panel chart-panel">
+          <figcaption>League position after each matchweek</figcaption>
+          <div class="chart-box"><canvas id="pos-chart" aria-label="League position by matchweek"></canvas></div>
+        </figure>
+        <figure class="panel chart-panel">
+          <figcaption>Cumulative points</figcaption>
+          <div class="chart-box"><canvas id="pts-chart" aria-label="Cumulative points by matchweek"></canvas></div>
+        </figure>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="block-head"><h2>Premier League Table</h2></div>
+      <div class="panel table-scroll">
+        <table class="league-table" id="league-table"></table>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="block-head">
+        <h2>All Fixtures &amp; Results</h2>
+        <div class="filters" id="comp-filters" role="group" aria-label="Filter by competition"></div>
+      </div>
+      <div class="panel table-scroll">
+        <table class="fixtures" id="fixtures"></table>
+      </div>
+    </section>
+  </main>
+
+  <footer class="wrap footer">
+    <span id="updated"></span> · Data: ESPN · Times shown in your local time zone
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
