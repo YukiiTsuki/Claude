@@ -177,12 +177,16 @@ img { display: block; }
 
 /* Glance */
 .glance { display: grid; grid-template-columns: minmax(220px, 1fr) 2fr; gap: 12px; }
-.form-strip { display: flex; gap: 6px; flex-wrap: wrap; }
-.form-item { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 11px; color: var(--muted); }
-.form-item .res { width: 32px; height: 32px; font-size: 14px; }
+.form-strip { display: flex; gap: 8px; flex-wrap: wrap; }
+.form-item { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 48px; font-size: 11px; color: var(--muted); }
+.form-item .res { width: 34px; height: 34px; font-size: 14px; }
+.form-item .form-score { font-size: 13px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+.form-item .form-pens { font-size: 10px; font-weight: 600; }
+.form-item .comp-tag { font-size: 10px; padding: 1px 7px; }
+.form-legend { margin-top: 12px; font-size: 11px; color: var(--muted); }
 .mini-table, .league-table, .fixtures { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
-.mini-table th, .mini-table td { padding: 6px 8px; text-align: center; border-bottom: 1px solid var(--border); font-size: 14px; }
-.mini-table th:first-child, .mini-table td:first-child { text-align: left; }
+.mini-table th, .mini-table td { white-space: nowrap; padding: 6px 8px; text-align: center; border-bottom: 1px solid var(--border); font-size: 14px; }
+.mini-table th:first-child, .mini-table td:first-child { text-align: left; white-space: normal; }
 .mini-table th { font-size: 12px; color: var(--muted); font-weight: 600; }
 
 /* Charts */

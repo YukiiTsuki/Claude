@@ -8,6 +8,13 @@ const COMP_SHORT = {
   "eng.league_cup": "Carabao Cup",
   "eng.charity": "Community Shield",
 };
+const COMP_ABBR = {
+  "eng.1": "PL",
+  "uefa.champions": "UCL",
+  "eng.fa": "FAC",
+  "eng.league_cup": "EFL",
+  "eng.charity": "CS",
+};
 const DAY = 24 * 60 * 60 * 1000;
 
 const $ = (sel) => document.querySelector(sel);
@@ -150,8 +157,13 @@ function renderGlance(data) {
   $("#form-strip").innerHTML = played.slice(-5).map((m) =>
     `<div class="form-item" title="${esc(`${COMP_SHORT[m.competition]}: ${m.home ? "vs" : "at"} ${m.opponent.name} ${scoreText(m)}`)}">
       <span class="res ${m.result}">${m.result}</span>
-      <span>${esc(m.opponent.abbr || m.opponent.short)}</span>
+      <span class="comp-tag ${m.competition}">${esc(COMP_ABBR[m.competition])}</span>
+      <span class="form-score">${esc(scoreText(m))}</span>
+      <span>${m.home ? "vs" : "@"} ${esc(m.opponent.abbr || m.opponent.short)}</span>
+      ${m.score?.penFor != null ? `<span class="form-pens">pens ${m.score.penFor}–${m.score.penAgainst}</span>` : ""}
     </div>`).join("");
+  const shown = COMP_ORDER.filter((c) => played.slice(-5).some((m) => m.competition === c));
+  $("#form-legend").textContent = shown.map((c) => `${COMP_ABBR[c]} = ${COMP_SHORT[c]}`).join(" · ");
 
   const rows = COMP_ORDER.map((c) => {
     const ms = data.matches.filter((m) => m.competition === c);
