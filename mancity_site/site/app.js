@@ -31,16 +31,26 @@ function ordinal(n) {
   return n + (s[(v - 20) % 10] || s[v] || s[0]);
 }
 
-/** Monday 00:00 local time of the week containing d. */
-function weekStart(d) {
-  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  const offset = (x.getDay() + 6) % 7; // Mon=0 ... Sun=6
-  x.setDate(x.getDate() - offset);
-  return x;
+/* Weeks follow UK match days (Mon–Sun, Europe/London), so a Sunday-evening
+   kick-off in England counts as Sunday even where it is already Monday. */
+const UK_TZ = "Europe/London";
+const fmtUkKey = new Intl.DateTimeFormat("en-CA", { timeZone: UK_TZ, year: "numeric", month: "2-digit", day: "2-digit" });
+const fmtUkDay = new Intl.DateTimeFormat("en-GB", { timeZone: UK_TZ, weekday: "short", day: "numeric", month: "short" });
+const fmtKeyShort = new Intl.DateTimeFormat("en-GB", { timeZone: "UTC", day: "numeric", month: "short" });
+
+/** UK calendar date of an instant, as "YYYY-MM-DD". */
+const ukDateKey = (d) => fmtUkKey.format(d);
+const keyToUtc = (key) => new Date(`${key}T00:00:00Z`);
+const addDays = (key, n) => new Date(keyToUtc(key).getTime() + n * DAY).toISOString().slice(0, 10);
+
+/** UK date key of the Monday of the UK week containing instant d. */
+function ukWeekStart(d) {
+  const key = ukDateKey(d);
+  const offset = (keyToUtc(key).getUTCDay() + 6) % 7; // Mon=0 ... Sun=6
+  return addDays(key, -offset);
 }
-function rangeLabel(start) {
-  const end = new Date(start.getTime() + 6 * DAY);
-  return `${fmtShort.format(start)} – ${fmtShort.format(end)}`;
+function rangeLabel(startKey) {
+  return `${fmtKeyShort.format(keyToUtc(startKey))} – ${fmtKeyShort.format(keyToUtc(addDays(startKey, 6)))} (UK)`;
 }
 
 function scoreText(m) {
@@ -92,7 +102,8 @@ function matchCard(m, data, now, { highlight = false } = {}) {
   return `<article class="card${highlight ? " next" : ""}">
     <div class="card-top">
       <span class="comp-tag ${m.competition}">${esc(COMP_SHORT[m.competition])}</span>
-      <span>${esc(fmtDay.format(date))}</span>
+      <span>${esc(fmtDay.format(date))}${fmtDay.format(date) !== fmtUkDay.format(date)
+        ? ` <span class="uk-date">(UK ${esc(fmtUkDay.format(date))})</span>` : ""}</span>
     </div>
     <div class="matchup">
       <div class="side"><img src="${esc(home.logo)}" alt="" loading="lazy"><span>${esc(home.name)}</span></div>
@@ -108,10 +119,10 @@ function matchCard(m, data, now, { highlight = false } = {}) {
 
 /* ---------- This week / last week ---------- */
 function renderWeeks(data, now) {
-  const start = weekStart(now);
-  const next = new Date(start.getTime() + 7 * DAY);
-  const prev = new Date(start.getTime() - 7 * DAY);
-  const within = (m, a, b) => { const t = new Date(m.date); return t >= a && t < b; };
+  const start = ukWeekStart(now);
+  const next = addDays(start, 7);
+  const prev = addDays(start, -7);
+  const within = (m, a, b) => { const k = ukDateKey(new Date(m.date)); return k >= a && k < b; };
 
   $("#this-week-range").textContent = rangeLabel(start);
   $("#last-week-range").textContent = rangeLabel(prev);
@@ -123,7 +134,7 @@ function renderWeeks(data, now) {
       .map((m) => matchCard(m, data, now, { highlight: m === firstUpcoming }))
       .join("");
   } else {
-    const upcoming = data.matches.find((m) => m.state !== "post" && new Date(m.date) >= next);
+    const upcoming = data.matches.find((m) => m.state !== "post" && ukDateKey(new Date(m.date)) >= next);
     $("#this-week-cards").innerHTML = `<div class="empty">No matches this week.${
       upcoming ? " Next up:" : ""}</div>` + (upcoming ? matchCard(upcoming, data, now, { highlight: true }) : "");
   }

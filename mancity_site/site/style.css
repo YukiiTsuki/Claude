@@ -125,6 +125,7 @@ img { display: block; }
 }
 .card.next { border-color: var(--city); box-shadow: 0 0 0 1px var(--city) inset; }
 .card-top { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--text-2); }
+.uk-date { color: var(--muted); }
 .comp-tag {
   display: inline-block;
   font-size: 11px;
