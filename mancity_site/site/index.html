@@ -20,7 +20,16 @@
     </div>
   </header>
 
+  <nav class="tabs" aria-label="Sections">
+    <div class="wrap tabs-inner" role="tablist">
+      <button type="button" role="tab" id="tab-overview" aria-controls="panel-overview" aria-selected="true">Overview</button>
+      <button type="button" role="tab" id="tab-league" aria-controls="panel-league" aria-selected="false" tabindex="-1">Premier League</button>
+      <button type="button" role="tab" id="tab-fixtures" aria-controls="panel-fixtures" aria-selected="false" tabindex="-1">Fixtures</button>
+    </div>
+  </nav>
+
   <main class="wrap">
+    <div class="tab-panel" id="panel-overview" role="tabpanel" aria-labelledby="tab-overview">
     <section class="block" id="this-week">
       <div class="block-head">
         <h2>This Week</h2>
@@ -51,6 +60,9 @@
       </div>
     </section>
 
+    </div>
+
+    <div class="tab-panel" id="panel-league" role="tabpanel" aria-labelledby="tab-league" hidden>
     <section class="block">
       <div class="block-head">
         <h2>Premier League Journey</h2>
@@ -77,6 +89,9 @@
       </div>
     </section>
 
+    </div>
+
+    <div class="tab-panel" id="panel-fixtures" role="tabpanel" aria-labelledby="tab-fixtures" hidden>
     <section class="block">
       <div class="block-head">
         <h2>All Fixtures &amp; Results</h2>
@@ -86,6 +101,7 @@
         <table class="fixtures" id="fixtures"></table>
       </div>
     </section>
+    </div>
   </main>
 
   <footer class="wrap footer">

@@ -312,6 +312,40 @@ function setupFilters(data) {
   renderFixtures(data, "");
 }
 
+/* ---------- Tabs ---------- */
+function setupTabs(onShow) {
+  const tabs = [...document.querySelectorAll('[role="tab"]')];
+  const names = tabs.map((t) => t.id.replace("tab-", ""));
+  const show = (name, focus = false) => {
+    if (!names.includes(name)) name = names[0];
+    tabs.forEach((t) => {
+      const on = t.id === `tab-${name}`;
+      t.setAttribute("aria-selected", String(on));
+      t.tabIndex = on ? 0 : -1;
+      document.getElementById(t.getAttribute("aria-controls")).hidden = !on;
+      if (on && focus) t.focus();
+    });
+    onShow(name);
+  };
+  tabs.forEach((t, i) => {
+    t.addEventListener("click", () => {
+      const name = names[i];
+      history.replaceState(null, "", `#${name}`);
+      show(name);
+      window.scrollTo({ top: 0 });
+    });
+    t.addEventListener("keydown", (e) => {
+      const d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+      if (!d) return;
+      const name = names[(i + d + names.length) % names.length];
+      history.replaceState(null, "", `#${name}`);
+      show(name, true);
+    });
+  });
+  window.addEventListener("hashchange", () => show(location.hash.slice(1)));
+  show(location.hash.slice(1));
+}
+
 /* ---------- Boot ---------- */
 async function main() {
   let data;
@@ -326,11 +360,14 @@ async function main() {
   renderHeader(data);
   renderWeeks(data, now);
   renderGlance(data);
-  setupCompare(data);
+  let chartsReady = false;
   renderTable(data);
   setupFilters(data);
+  setupTabs((name) => {
+    if (name === "league" && !chartsReady) { chartsReady = true; setupCompare(data); }
+  });
 
   // Re-colour charts if the OS theme flips.
-  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => renderCharts(data, $("#compare-select").value));
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { if (chartsReady) renderCharts(data, $("#compare-select").value); });
 }
 main();
