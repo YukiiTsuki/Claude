@@ -244,8 +244,10 @@ def build_league() -> dict:
     mismatch = [teams[r["id"]]["name"] for r in table if espn_rank.get(r["id"]) and espn_rank[r["id"]] != r["pos"]]
     if mismatch:
         print(f"note: computed table order differs from ESPN for {mismatch}", file=sys.stderr)
+    prev_pos = {r["id"]: r["pos"] for r in table_after(max_weeks - 1)} if max_weeks >= 2 else {}
     for r in table:
         r["zone"] = zones.get(r["id"])
+        r["change"] = prev_pos[r["id"]] - r["pos"] if r["id"] in prev_pos else None  # + = moved up
 
     return {
         "name": group.get("name", "Premier League"),
@@ -311,6 +313,48 @@ def build_ucl(today: datetime) -> dict:
             matchday += 1
         md_of_date[ev["date"][:10]] = matchday
         last_day = day
+
+    # Position change since before the latest played matchday (ESPN's rankChange is always 0).
+    played = []
+    for ev in events_sorted:
+        comp = ev["competitions"][0]
+        if (ev.get("season") or {}).get("slug") != "league-phase" or comp["status"]["type"].get("state") != "post":
+            continue
+        sides = {c["homeAway"]: c for c in comp["competitors"]}
+        hg, _ = score_of(sides["home"])
+        ag, _ = score_of(sides["away"])
+        if hg is None or ag is None:
+            continue
+        played.append((md_of_date[ev["date"][:10]], sides["home"]["id"], sides["away"]["id"], hg, ag))
+
+    def ucl_order(results: list) -> dict[str, int]:
+        st = {r["id"]: {"pts": 0, "gf": 0, "ga": 0, "agf": 0, "w": 0, "aw": 0} for r in table}
+        for _, h, a, hg, ag in results:
+            for tid, f, g, away in ((h, hg, ag, False), (a, ag, hg, True)):
+                if tid not in st:
+                    continue
+                t = st[tid]
+                t["gf"] += f; t["ga"] += g
+                t["pts"] += 3 if f > g else 1 if f == g else 0
+                if f > g:
+                    t["w"] += 1
+                    t["aw"] += away
+                if away:
+                    t["agf"] += f
+        # UEFA league-phase tiebreakers (approximation): pts, GD, GF, away GF, wins, away wins
+        ids = sorted(st, key=lambda i: (-st[i]["pts"], -(st[i]["gf"] - st[i]["ga"]), -st[i]["gf"],
+                                        -st[i]["agf"], -st[i]["w"], -st[i]["aw"]))
+        return {tid: i + 1 for i, tid in enumerate(ids)}
+
+    latest_md = max((p[0] for p in played), default=0)
+    if latest_md >= 2:
+        before = ucl_order([p for p in played if p[0] < latest_md])
+        for r in table:
+            r["change"] = before[r["id"]] - r["pos"] if r["id"] in before else None
+        now_order = ucl_order(played)
+        differs = [r["short"] for r in table if now_order.get(r["id"]) != r["pos"]]
+        if differs:
+            print(f"note: computed UCL order differs from ESPN for {differs}", file=sys.stderr)
 
     fixtures = []
     for ev in events_sorted:

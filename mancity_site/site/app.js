@@ -208,13 +208,22 @@ function renderGlance(data) {
 }
 
 /* ---------- Standings tables (PL + UCL) ---------- */
+function changeMark(c) {
+  if (c == null) return "";
+  if (c > 0) return `<span class="up" title="Up ${c} since last round">▲${c}</span>`;
+  if (c < 0) return `<span class="down" title="Down ${-c} since last round">▼${-c}</span>`;
+  return `<span class="same" title="No change since last round">–</span>`;
+}
+
 function renderStandings(sel, rows, teamOf, cityId, { form = false } = {}) {
+  const hasChange = rows.some((r) => r.change != null);
   const body = rows.map((r) => {
     const t = teamOf(r);
     const zone = r.zone?.color ? `style="--zone:${esc(r.zone.color)}"` : "";
     const formCell = form ? `<td><span class="mini-form">${r.form.map((f) => `<span class="res ${f}">${f}</span>`).join("")}</span></td>` : "";
     return `<tr class="${r.id === cityId ? "city" : ""}">
       <td class="pos" ${zone} title="${esc(r.zone?.label || "")}">${r.pos}</td>
+      ${hasChange ? `<td class="chg">${changeMark(r.change)}</td>` : ""}
       <td class="team"><div class="team-cell"><img src="${esc(t.logo)}" alt="" loading="lazy">${esc(t.short || t.name)}</div></td>
       <td>${r.p}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td>
       <td>${r.gf}</td><td>${r.ga}</td><td>${r.gd > 0 ? "+" : ""}${r.gd}</td>
@@ -227,7 +236,7 @@ function renderStandings(sel, rows, teamOf, cityId, { form = false } = {}) {
   const legend = [...zones].map(([label, color]) => `<span><i style="background:${esc(color)}"></i>${esc(label)}</span>`).join("");
 
   const table = $(sel);
-  table.innerHTML = `<thead><tr><th>#</th><th class="team">Club</th><th>P</th><th>W</th><th>D</th><th>L</th>
+  table.innerHTML = `<thead><tr><th>#</th>${hasChange ? `<th class="chg" title="Change since last round">+/–</th>` : ""}<th class="team">Club</th><th>P</th><th>W</th><th>D</th><th>L</th>
     <th>GF</th><th>GA</th><th>GD</th><th>Pts</th>${form ? "<th>Form</th>" : ""}</tr></thead><tbody>${body}</tbody>`;
   if (legend) table.insertAdjacentHTML("afterend", `<div class="zone-legend">${legend}</div>`);
 }
