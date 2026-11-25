@@ -19,14 +19,13 @@
 mancity_site/
   fetch_data.py   抓 ESPN 資料 → 產生 site/data.json
   site/           網頁本體（index.html、style.css、app.js）
-.github/workflows/mancity-site.yml   每 6 小時更新資料並部署到 GitHub Pages
+.github/workflows/mancity-site.yml   更新資料並部署到 GitHub Pages
 ```
 
 ## 第一次設定（GitHub Pages）
 
 1. 到 repo 的 **Settings → Pages**，**Source** 選 **GitHub Actions**
-2. 到 **Settings → Environments → github-pages**，在 **Deployment branches and tags** 加上
-   `mci-match-webpage`（預設只允許從預設分支部署；合併到預設分支後就不用這步）
+2. 確認 **Settings → General → Default branch** 是 `mci-match-webpage`（Pages 預設只允許從預設分支部署）
 3. 到 **Actions → Man City site → Run workflow** 手動執行一次
 4. 完成後網址會出現在 workflow 的 deploy 步驟，通常是 `https://<帳號>.github.io/<repo>/`
 
@@ -41,3 +40,12 @@ python -m http.server 8000 --directory mancity_site/site
 ```
 
 然後打開 http://localhost:8000 。
+
+## 自動更新（cron-job.org）
+
+GitHub 內建排程延遲太嚴重，改由 [cron-job.org](https://cron-job.org) 每天台灣時間 08:50 觸發 workflow。
+
+- URL：`POST https://api.github.com/repos/YukiiTsuki/Claude/actions/workflows/mancity-site.yml/dispatches`
+- Headers：`Authorization: Bearer <fine-grained token>`、`Accept: application/vnd.github+json`、`X-GitHub-Api-Version: 2022-11-28`、`Content-Type: application/json`
+- Body：`{"ref":"mci-match-webpage"}`
+- 時區：Asia/Taipei

@@ -1,10 +1,9 @@
 name: Man City site (update data + deploy)
 
 on:
-  schedule:
-    # 每 6 小時更新一次資料（UTC 01:17、07:17、13:17、19:17 = 台灣 09:17、15:17、21:17、03:17）
-    # 注意：GitHub 只會執行「預設分支」上的排程，所以 mci-match-webpage 必須是 repo 的預設分支
-    - cron: "17 1,7,13,19 * * *"
+  # 由 cron-job.org 定時呼叫 GitHub API 觸發（GitHub 內建排程延遲太嚴重，已停用）
+  # 時段：台灣時間每天 08:50（ref: mci-match-webpage）
+  # 也可以在 GitHub 上手動執行
   workflow_dispatch:
   push:
     paths:
