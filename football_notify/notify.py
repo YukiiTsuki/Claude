@@ -234,8 +234,10 @@ def main() -> int:
 
     dry_run = os.environ.get("DRY_RUN") == "1"
     now = datetime.now(timezone.utc)
-    # 同時檢查前一天（UTC）：補推在檢查時段結束後才完場的比賽
-    dates = [now.strftime("%Y%m%d"), (now - timedelta(days=1)).strftime("%Y%m%d")]
+    # 同時回頭檢查前 2 天（UTC）：補推在檢查時段結束後才完場的比賽。
+    # 時段之間最長空檔約 37 小時（例如週四 06:30 → 週五 20:00），
+    # 只查前一天會漏掉週四清晨打到延長賽／PK 的歐冠。
+    dates = [(now - timedelta(days=d)).strftime("%Y%m%d") for d in range(3)]
     state = load_state()
     notified = set(state.get("notified", []))
     changed = False
